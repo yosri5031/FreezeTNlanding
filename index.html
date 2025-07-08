@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Freezepix.tn - Services d'impression photos en ligne</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #FFD700 0%, #FF6B6B 50%, #4ECDC4 100%);
@@ -37,6 +37,43 @@
         }
         .language-dropdown.active {
             display: block;
+        }
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+        .file-upload-area.drag-over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .file-upload-area.has-file {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .file-upload-area.has-error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .file-preview {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -102,7 +139,7 @@
                     <i class="fas fa-camera mr-2"></i>
                     Imprimer mes photos
                 </button>
-                <button class="bg-white text-red-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                <button onclick="openDocumentFlow()" class="bg-white text-red-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                     <i class="fas fa-file-pdf mr-2"></i>
                     Imprimer documents
                 </button>
@@ -164,21 +201,6 @@
                             Commencer l'impression documents
                         </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Coming Soon -->
-            <div class="text-center bg-gray-100 p-8 rounded-2xl">
-                <h3 class="text-2xl font-bold mb-4">
-                    <i class="fas fa-clock mr-2 text-yellow-500"></i>
-                    Bientôt disponible
-                </h3>
-                <p class="text-gray-700 mb-4">Autres services d'impression professionnelle</p>
-                <div class="flex flex-wrap justify-center gap-4">
-                    <span class="bg-white px-4 py-2 rounded-full text-sm">Cartes de visite</span>
-                    <span class="bg-white px-4 py-2 rounded-full text-sm">Flyers</span>
-                    <span class="bg-white px-4 py-2 rounded-full text-sm">Brochures</span>
-                    <span class="bg-white px-4 py-2 rounded-full text-sm">Affiches</span>
                 </div>
             </div>
         </div>
@@ -461,194 +483,324 @@
     <!-- Document Printing Flow Modal -->
     <div id="documentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold">Impression Documents</h2>
-                        <button onclick="closeDocumentFlow()" class="text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-times text-2xl"></i>
-                        </button>
-                    </div>
-
-                    <!-- Step 1: Upload -->
-                    <div id="step1" class="step">
-                        <div class="text-center mb-6">
-                            <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-cloud-upload-alt text-blue-600 text-3xl"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold mb-2">1. Télécharger votre document</h3>
-                            <p class="text-gray-600">Formats acceptés: PDF, DOCX</p>
-                        </div>
-                        
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
-                            <i class="fas fa-file-upload text-4xl text-gray-400 mb-4"></i>
-                            <p class="text-lg mb-2">Cliquez pour sélectionner ou glissez-déposez</p>
-                            <p class="text-sm text-gray-500">Taille max: 10MB</p>
-                            <input type="file" accept=".pdf,.docx" class="hidden" id="fileInput">
-                        </div>
-                        
-                        <div class="mt-6 flex justify-end">
-                            <button onclick="nextStep(2)" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                                Continuer <i class="fas fa-arrow-right ml-2"></i>
+            <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div class="flex flex-col h-full">
+                    <!-- Header -->
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-2xl font-bold">Impression Documents</h2>
+                            <button onclick="closeDocumentFlow()" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-times text-2xl"></i>
                             </button>
                         </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-2">
+                                <span>Étape <span id="currentStep">1</span> sur 4</span>
+                                <span id="progressPercent">25%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div id="progressBar" class="bg-blue-600 h-2 rounded-full progress-bar" style="width: 25%"></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Step 2: Print Options -->
-                    <div id="step2" class="step hidden">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-4">2. Options d'impression</h3>
+                    <!-- Content -->
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <!-- Step 1: Upload -->
+                        <div id="step1" class="step">
+                            <div class="text-center mb-6">
+                                <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-cloud-upload-alt text-blue-600 text-3xl"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold mb-2">1. Télécharger votre document</h3>
+                                <p class="text-gray-600">Formats acceptés: PDF, DOCX (max. 10MB)</p>
+                            </div>
                             
-                            <div class="grid md:grid-cols-2 gap-6">
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2">Pages à imprimer</label>
-                                        <select class="w-full p-3 border border-gray-300 rounded-lg">
-                                            <option>Toutes les pages</option>
-                                            <option>Pages spécifiques</option>
-                                        </select>
+                            <!-- Upload Area -->
+                            <div id="uploadArea" class="file-upload-area rounded-lg p-8 text-center cursor-pointer mb-6">
+                                <div id="uploadContent">
+                                    <i class="fas fa-file-upload text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-lg mb-2">Cliquez pour sélectionner ou glissez-déposez votre fichier</p>
+                                    <p class="text-sm text-gray-500">PDF, DOCX - Taille maximum: 10MB</p>
+                                </div>
+                                <input type="file" id="fileInput" accept=".pdf,.docx" class="hidden">
+                            </div>
+
+                            <!-- File Info -->
+                            <div id="fileInfo" class="hidden fade-in">
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i id="fileIcon" class="fas fa-file-pdf text-red-600 text-2xl mr-3"></i>
+                                            <div>
+                                                <p id="fileName" class="font-medium"></p>
+                                                <p id="fileSize" class="text-sm text-gray-600"></p>
+                                            </div>
+                                        </div>
+                                        <button onclick="removeFile()" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </div>
-                                    
-                                    <div id="pageRange" class="hidden">
-                                        <label class="block text-sm font-medium mb-2">Plage de pages</label>
-                                        <input type="text" placeholder="ex: 1-5, 8, 10-12" class="w-full p-3 border border-gray-300 rounded-lg">
+                                </div>
+                                
+                                <!-- Upload Progress -->
+                                <div id="uploadProgress" class="hidden">
+                                    <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                        <span>Téléchargement en cours...</span>
+                                        <span id="uploadPercent">0%</span>
                                     </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2">Type d'impression</label>
-                                        <div class="space-y-2">
-                                            <label class="flex items-center">
-                                                <input type="radio" name="sides" value="recto" class="mr-2">
-                                                <span>Recto seulement</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="radio" name="sides" value="recto-verso" class="mr-2" checked>
-                                                <span>Recto-Verso</span>
-                                            </label>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="uploadProgressBar" class="bg-blue-600 h-2 rounded-full progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Error Messages -->
+                            <div id="errorMessage" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                                    <span id="errorText" class="text-red-700"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Print Options -->
+                        <div id="step2" class="step hidden">
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-4">2. Options d'impression</h3>
+                                
+                                <!-- Document Preview -->
+                                <div id="documentPreview" class="bg-gray-50 rounded-lg p-4 mb-6">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="font-semibold">Document sélectionné</h4>
+                                        <span id="totalPages" class="text-sm text-gray-600"></span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i id="previewIcon" class="fas fa-file-pdf text-red-600 text-2xl mr-3"></i>
+                                        <div>
+                                            <p id="previewName" class="font-medium"></p>
+                                            <p id="previewSize" class="text-sm text-gray-600"></p>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2">Couleur</label>
-                                        <div class="space-y-2">
-                                            <label class="flex items-center">
-                                                <input type="radio" name="color" value="bw" class="mr-2" checked>
-                                                <span>Noir & Blanc (0.4 TND/page)</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="radio" name="color" value="color" class="mr-2">
-                                                <span>Couleur (0.7 TND/page)</span>
-                                            </label>
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">Pages à imprimer</label>
+                                            <select id="pageSelection" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                <option value="all">Toutes les pages</option>
+                                                <option value="range">Pages spécifiques</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div id="pageRangeDiv" class="hidden">
+                                            <label class="block text-sm font-medium mb-2">Plage de pages</label>
+                                            <input type="text" id="pageRange" placeholder="ex: 1-5, 8, 10-12" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <p class="text-xs text-gray-500 mt-1">Exemples: 1-5, 8, 10-12</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">Type d'impression</label>
+                                            <div class="space-y-2">
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="sides" value="simplex" class="mr-2">
+                                                    <span>Recto seulement</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="sides" value="duplex" class="mr-2" checked>
+                                                    <span>Recto-Verso</span>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2">Copies</label>
-                                        <input type="number" value="1" min="1" class="w-full p-3 border border-gray-300 rounded-lg">
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">Couleur</label>
+                                            <div class="space-y-2">
+                                                <label class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <input type="radio" name="color" value="bw" class="mr-2" checked>
+                                                        <span>Noir & Blanc</span>
+                                                    </div>
+                                                    <span class="text-sm text-green-600 font-medium">0.4 TND/page</span>
+                                                </label>
+                                                <label class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <input type="radio" name="color" value="color" class="mr-2">
+                                                        <span>Couleur</span>
+                                                    </div>
+                                                    <span class="text-sm text-green-600 font-medium">0.7 TND/page</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">Nombre de copies</label>
+                                            <input type="number" id="copies" value="1" min="1" max="50" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        </div>
+                                        
+                                        <!-- Price Preview -->
+                                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                            <div class="flex justify-between items-center">
+                                                <span class="font-medium">Prix estimé:</span>
+                                                <span id="estimatedPrice" class="text-xl font-bold text-blue-600">0.0 TND</span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 mt-1">Hors frais de livraison</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="flex justify-between">
-                            <button onclick="prevStep(1)" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                                <i class="fas fa-arrow-left mr-2"></i> Retour
-                            </button>
-                            <button onclick="nextStep(3)" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                                Continuer <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Step 3: Delivery -->
-                    <div id="step3" class="step hidden">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-4">3. Mode de livraison</h3>
-                            
-                            <div class="space-y-4">
-                                <div class="border border-gray-300 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer">
-                                    <label class="flex items-center">
-                                        <input type="radio" name="delivery" value="pickup" class="mr-3" checked>
-                                        <div>
-                                            <div class="flex items-center">
-                                                <i class="fas fa-store text-green-600 mr-2"></i>
-                                                <span class="font-semibold">Retrait en bibliothèque</span>
-                                                <span class="ml-2 text-sm bg-green-100 text-green-800 px-2 py-1 rounded">GRATUIT</span>
+                        <!-- Step 3: Delivery -->
+                        <div id="step3" class="step hidden">
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-4">3. Mode de livraison</h3>
+                                
+                                <div class="space-y-4">
+                                    <div class="border border-gray-300 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="delivery" value="pickup" class="mr-3" checked>
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-store text-green-600 mr-2"></i>
+                                                        <span class="font-semibold">Retrait en bibliothèque</span>
+                                                    </div>
+                                                    <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">GRATUIT</span>
+                                                </div>
+                                                <p class="text-sm text-gray-600 mt-1">Retrait dans une bibliothèque proche de chez vous</p>
+                                                <p class="text-xs text-gray-500 mt-1">Disponible sous 24h</p>
                                             </div>
-                                            <p class="text-sm text-gray-600 mt-1">Retrait dans une bibliothèque proche de chez vous</p>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="border border-gray-300 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="delivery" value="shipping" class="mr-3">
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-shipping-fast text-blue-600 mr-2"></i>
+                                                        <span class="font-semibold">Livraison rapide</span>
+                                                    </div>
+                                                    <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">5 TND</span>
+                                                </div>
+                                                <p class="text-sm text-gray-600 mt-1">Livraison à domicile par Poste Rapide</p>
+                                                <p class="text-xs text-gray-500 mt-1">Livraison sous 2-3 jours ouvrables</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="border border-gray-300 rounded-lg p-4 hover:border-purple-500 transition-colors cursor-pointer">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="delivery" value="express" class="mr-3">
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-bolt text-purple-600 mr-2"></i>
+                                                        <span class="font-semibold">Livraison express</span>
+                                                    </div>
+                                                    <span class="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">8 TND</span>
+                                                </div>
+                                                <p class="text-sm text-gray-600 mt-1">Livraison express dans la journée</p>
+                                                <p class="text-xs text-gray-500 mt-1">Disponible uniquement à Tunis et Sousse</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Summary & Checkout -->
+                        <div id="step4" class="step hidden">
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold mb-4">4. Récapitulatif de la commande</h3>
+                                
+                                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                                    <h4 class="font-semibold mb-4">Détails de la commande</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Document:</span>
+                                            <span id="summaryFileName" class="font-medium"></span>
                                         </div>
-                                    </label>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Pages:</span>
+                                            <span id="summaryPages" class="font-medium"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Type:</span>
+                                            <span id="summaryType" class="font-medium"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Couleur:</span>
+                                            <span id="summaryColor" class="font-medium"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Copies:</span>
+                                            <span id="summaryCopies" class="font-medium"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Livraison:</span>
+                                            <span id="summaryDelivery" class="font-medium"></span>
+                                        </div>
+                                        <hr class="my-4">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Sous-total impression:</span>
+                                            <span id="summarySubtotal" class="font-medium"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Frais de livraison:</span>
+                                            <span id="summaryShipping" class="font-medium"></span>
+                                        </div>
+                                        <hr class="my-4">
+                                        <div class="flex justify-between text-lg font-bold">
+                                            <span>Total:</span>
+                                            <span id="summaryTotal" class="text-blue-600"></span>
+                                        </div>
+                                    </div>
                                 </div>
                                 
-                                <div class="border border-gray-300 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer">
-                                    <label class="flex items-center">
-                                        <input type="radio" name="delivery" value="shipping" class="mr-3">
+                                <!-- Contact Information -->
+                                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                    <h4 class="font-semibold mb-4">Informations de contact</h4>
+                                    <div class="grid md:grid-cols-2 gap-4">
                                         <div>
-                                            <div class="flex items-center">
-                                                <i class="fas fa-shipping-fast text-blue-600 mr-2"></i>
-                                                <span class="font-semibold">Livraison rapide</span>
-                                                <span class="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">5 TND</span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 mt-1">Livraison à domicile par Poste Rapide</p>
+                                            <label class="block text-sm font-medium mb-2">Nom complet *</label>
+                                            <input type="text" id="customerName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                                         </div>
-                                    </label>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">Téléphone *</label>
+                                            <input type="tel" id="customerPhone" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium mb-2">Email *</label>
+                                            <input type="email" id="customerEmail" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                                        </div>
+                                        <div id="addressSection" class="md:col-span-2 hidden">
+                                            <label class="block text-sm font-medium mb-2">Adresse de livraison *</label>
+                                            <textarea id="customerAddress" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="flex justify-between">
-                            <button onclick="prevStep(2)" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                                <i class="fas fa-arrow-left mr-2"></i> Retour
-                            </button>
-                            <button onclick="nextStep(4)" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                                Continuer <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
                         </div>
                     </div>
 
-                    <!-- Step 4: Summary & Checkout -->
-                    <div id="step4" class="step hidden">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-4">4. Récapitulatif de la commande</h3>
-                            
-                            <div class="bg-gray-50 rounded-lg p-6">
-                                <div class="space-y-3">
-                                    <div class="flex justify-between">
-                                        <span>Document:</span>
-                                        <span class="font-medium">document_exemple.pdf</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>Pages:</span>
-                                        <span class="font-medium">10 pages</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>Type:</span>
-                                        <span class="font-medium">Recto-Verso, Noir & Blanc</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>Copies:</span>
-                                        <span class="font-medium">1</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>Livraison:</span>
-                                        <span class="font-medium">Retrait en bibliothèque</span>
-                                    </div>
-                                    <hr class="my-4">
-                                    <div class="flex justify-between text-lg font-bold">
-                                        <span>Total:</span>
-                                        <span class="text-blue-600">4.0 TND</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
+                    <!-- Footer -->
+                    <div class="p-6 border-t border-gray-200">
                         <div class="flex justify-between">
-                            <button onclick="prevStep(3)" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                            <button id="prevBtn" onclick="prevStep()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors hidden">
                                 <i class="fas fa-arrow-left mr-2"></i> Retour
                             </button>
-                            <button onclick="proceedToCheckout()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                            <button id="nextBtn" onclick="nextStep()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors ml-auto">
+                                Continuer <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                            <button id="submitBtn" onclick="submitOrder()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors ml-auto hidden">
                                 <i class="fas fa-shopping-cart mr-2"></i> Passer commande
                             </button>
                         </div>
@@ -659,34 +811,527 @@
     </div>
 
     <script>
-        // Document printing flow functions
+        // Global variables
+        let currentStepNumber = 1;
+        let uploadedFile = null;
+        let documentInfo = {
+            totalPages: 0,
+            fileName: '',
+            fileSize: 0,
+            fileType: ''
+        };
+
+        // File upload system
+        class FileUploadSystem {
+            constructor() {
+                this.maxFileSize = 10 * 1024 * 1024; // 10MB
+                this.allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                this.allowedExtensions = ['.pdf', '.docx'];
+                this.init();
+            }
+
+            init() {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+
+                // Click to upload
+                uploadArea.addEventListener('click', () => {
+                    fileInput.click();
+                });
+
+                // File input change
+                fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        this.handleFile(file);
+                    }
+                });
+
+                // Drag and drop
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('drag-over');
+                });
+
+                uploadArea.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('drag-over');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('drag-over');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFile(files[0]);
+                    }
+                });
+
+                // Page selection change
+                document.getElementById('pageSelection').addEventListener('change', (e) => {
+                    const pageRangeDiv = document.getElementById('pageRangeDiv');
+                    if (e.target.value === 'range') {
+                        pageRangeDiv.classList.remove('hidden');
+                    } else {
+                        pageRangeDiv.classList.add('hidden');
+                    }
+                    this.updatePrice();
+                });
+
+                // Price calculation listeners
+                document.querySelectorAll('input[name="color"]').forEach(input => {
+                    input.addEventListener('change', () => this.updatePrice());
+                });
+
+                document.getElementById('copies').addEventListener('input', () => this.updatePrice());
+                document.getElementById('pageRange').addEventListener('input', () => this.updatePrice());
+
+                // Delivery method change
+                document.querySelectorAll('input[name="delivery"]').forEach(input => {
+                    input.addEventListener('change', () => {
+                        const addressSection = document.getElementById('addressSection');
+                        if (input.value === 'shipping' || input.value === 'express') {
+                            addressSection.classList.remove('hidden');
+                        } else {
+                            addressSection.classList.add('hidden');
+                        }
+                        this.updatePrice();
+                    });
+                });
+            }
+
+            handleFile(file) {
+                // Reset previous state
+                this.hideError();
+                document.getElementById('uploadArea').classList.remove('has-file', 'has-error');
+
+                // Validate file
+                const validation = this.validateFile(file);
+                if (!validation.valid) {
+                    this.showError(validation.error);
+                    return;
+                }
+
+                // Set global file
+                uploadedFile = file;
+
+                // Update document info
+                documentInfo.fileName = file.name;
+                documentInfo.fileSize = file.size;
+                documentInfo.fileType = file.type;
+
+                // Show file info
+                this.showFileInfo(file);
+
+                // Simulate upload progress
+                this.simulateUpload();
+
+                // Extract pages (simulation)
+                this.extractDocumentInfo(file);
+            }
+
+            validateFile(file) {
+                // Check file size
+                if (file.size > this.maxFileSize) {
+                    return {
+                        valid: false,
+                        error: `Le fichier est trop volumineux. Taille maximum: ${this.maxFileSize / (1024 * 1024)}MB`
+                    };
+                }
+
+                // Check file type
+                if (!this.allowedTypes.includes(file.type)) {
+                    return {
+                        valid: false,
+                        error: 'Format de fichier non supporté. Utilisez PDF ou DOCX.'
+                    };
+                }
+
+                // Check file extension
+                const extension = '.' + file.name.split('.').pop().toLowerCase();
+                if (!this.allowedExtensions.includes(extension)) {
+                    return {
+                        valid: false,
+                        error: 'Extension de fichier non supportée. Utilisez .pdf ou .docx.'
+                    };
+                }
+
+                return { valid: true };
+            }
+
+            showFileInfo(file) {
+                const fileIcon = document.getElementById('fileIcon');
+                const fileName = document.getElementById('fileName');
+                const fileSize = document.getElementById('fileSize');
+                const fileInfo = document.getElementById('fileInfo');
+                const uploadArea = document.getElementById('uploadArea');
+
+                // Update icon based on file type
+                if (file.type === 'application/pdf') {
+                    fileIcon.className = 'fas fa-file-pdf text-red-600 text-2xl mr-3';
+                } else {
+                    fileIcon.className = 'fas fa-file-word text-blue-600 text-2xl mr-3';
+                }
+
+                fileName.textContent = file.name;
+                fileSize.textContent = this.formatFileSize(file.size);
+
+                uploadArea.classList.add('has-file');
+                fileInfo.classList.remove('hidden');
+            }
+
+            simulateUpload() {
+                const uploadProgress = document.getElementById('uploadProgress');
+                const uploadProgressBar = document.getElementById('uploadProgressBar');
+                const uploadPercent = document.getElementById('uploadPercent');
+
+                uploadProgress.classList.remove('hidden');
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 30;
+                    if (progress > 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            uploadProgress.classList.add('hidden');
+                        }, 500);
+                    }
+
+                    uploadProgressBar.style.width = progress + '%';
+                    uploadPercent.textContent = Math.round(progress) + '%';
+                }, 200);
+            }
+
+            extractDocumentInfo(file) {
+                // Simulate document analysis
+                setTimeout(() => {
+                    if (file.type === 'application/pdf') {
+                        // Simulate PDF page extraction
+                        documentInfo.totalPages = Math.floor(Math.random() * 20) + 1;
+                    } else {
+                        // Simulate DOCX page estimation
+                        documentInfo.totalPages = Math.floor(file.size / 50000) + 1;
+                    }
+
+                    this.updatePrice();
+                }, 1000);
+            }
+
+            updatePrice() {
+                const pageSelection = document.getElementById('pageSelection').value;
+                const pageRange = document.getElementById('pageRange').value;
+                const colorType = document.querySelector('input[name="color"]:checked').value;
+                const copies = parseInt(document.getElementById('copies').value) || 1;
+                const deliveryMethod = document.querySelector('input[name="delivery"]:checked').value;
+
+                let pagesToPrint = documentInfo.totalPages;
+
+                // Calculate pages based on selection
+                if (pageSelection === 'range' && pageRange) {
+                    pagesToPrint = this.calculateRangePages(pageRange);
+                }
+
+                // Calculate price per page
+                const pricePerPage = colorType === 'color' ? 0.7 : 0.4;
+                const printingCost = pagesToPrint * pricePerPage * copies;
+
+                // Calculate delivery cost
+                let deliveryCost = 0;
+                if (deliveryMethod === 'shipping') {
+                    deliveryCost = 5;
+                } else if (deliveryMethod === 'express') {
+                    deliveryCost = 8;
+                }
+
+                const totalCost = printingCost + deliveryCost;
+
+                // Update UI
+                document.getElementById('estimatedPrice').textContent = totalCost.toFixed(1) + ' TND';
+            }
+
+            calculateRangePages(range) {
+                // Simple range calculation (e.g., "1-5, 8, 10-12")
+                const parts = range.split(',').map(s => s.trim());
+                let totalPages = 0;
+
+                parts.forEach(part => {
+                    if (part.includes('-')) {
+                        const [start, end] = part.split('-').map(n => parseInt(n.trim()));
+                        if (start && end && start <= end) {
+                            totalPages += (end - start + 1);
+                        }
+                    } else {
+                        const pageNum = parseInt(part);
+                        if (pageNum) {
+                            totalPages += 1;
+                        }
+                    }
+                });
+
+                return Math.min(totalPages, documentInfo.totalPages);
+            }
+
+            showError(message) {
+                const errorMessage = document.getElementById('errorMessage');
+                const errorText = document.getElementById('errorText');
+                const uploadArea = document.getElementById('uploadArea');
+
+                errorText.textContent = message;
+                errorMessage.classList.remove('hidden');
+                uploadArea.classList.add('has-error');
+            }
+
+            hideError() {
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.classList.add('hidden');
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        }
+
+        // Initialize file upload system
+        const fileUpload = new FileUploadSystem();
+
+        // Document flow functions
         function openDocumentFlow() {
             document.getElementById('documentModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            resetFlow();
         }
-        
+
         function closeDocumentFlow() {
             document.getElementById('documentModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
-        
-        function nextStep(step) {
-            // Hide all steps
-            document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
-            // Show current step
-            document.getElementById(`step${step}`).classList.remove('hidden');
+
+        function resetFlow() {
+            currentStepNumber = 1;
+            uploadedFile = null;
+            documentInfo = { totalPages: 0, fileName: '', fileSize: 0, fileType: '' };
+            
+            // Reset UI
+            document.querySelectorAll('.step').forEach(step => step.classList.add('hidden'));
+            document.getElementById('step1').classList.remove('hidden');
+            updateProgress();
+            updateButtons();
+            
+            // Reset file input
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').classList.add('hidden');
+            document.getElementById('uploadArea').classList.remove('has-file', 'has-error');
+            fileUpload.hideError();
         }
-        
-        function prevStep(step) {
-            // Hide all steps
-            document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
-            // Show current step
-            document.getElementById(`step${step}`).classList.remove('hidden');
+
+        function nextStep() {
+            if (!canProceedToNextStep()) {
+                return;
+            }
+
+            if (currentStepNumber < 4) {
+                currentStepNumber++;
+                showStep(currentStepNumber);
+                updateProgress();
+                updateButtons();
+                
+                if (currentStepNumber === 2) {
+                    populateStep2();
+                } else if (currentStepNumber === 4) {
+                    populateSummary();
+                }
+            }
         }
-        
-        function proceedToCheckout() {
-            alert('Redirection vers la page de paiement...\nCommande en cours de traitement !');
-            closeDocumentFlow();
+
+        function prevStep() {
+            if (currentStepNumber > 1) {
+                currentStepNumber--;
+                showStep(currentStepNumber);
+                updateProgress();
+                updateButtons();
+            }
+        }
+
+        function canProceedToNextStep() {
+            switch (currentStepNumber) {
+                case 1:
+                    if (!uploadedFile) {
+                        fileUpload.showError('Veuillez sélectionner un fichier à télécharger.');
+                        return false;
+                    }
+                    break;
+                case 2:
+                    // Validate print options
+                    const pageSelection = document.getElementById('pageSelection').value;
+                    if (pageSelection === 'range') {
+                        const pageRange = document.getElementById('pageRange').value.trim();
+                        if (!pageRange) {
+                            alert('Veuillez spécifier la plage de pages à imprimer.');
+                            return false;
+                        }
+                    }
+                    break;
+                case 3:
+                    // Delivery method is always selected (radio button)
+                    break;
+                case 4:
+                    // Final step
+                    break;
+            }
+            return true;
+        }
+
+        function showStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => step.classList.add('hidden'));
+            document.getElementById(`step${stepNumber}`).classList.remove('hidden');
+        }
+
+        function updateProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const currentStep = document.getElementById('currentStep');
+            
+            const percentage = (currentStepNumber / 4) * 100;
+            progressBar.style.width = percentage + '%';
+            progressPercent.textContent = Math.round(percentage) + '%';
+            currentStep.textContent = currentStepNumber;
+        }
+
+        function updateButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Show/hide previous button
+            if (currentStepNumber > 1) {
+                prevBtn.classList.remove('hidden');
+            } else {
+                prevBtn.classList.add('hidden');
+            }
+            
+            // Show/hide next vs submit button
+            if (currentStepNumber < 4) {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            } else {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            }
+        }
+
+        function populateStep2() {
+            // Update document preview
+            const previewIcon = document.getElementById('previewIcon');
+            const previewName = document.getElementById('previewName');
+            const previewSize = document.getElementById('previewSize');
+            const totalPages = document.getElementById('totalPages');
+            
+            if (documentInfo.fileType === 'application/pdf') {
+                previewIcon.className = 'fas fa-file-pdf text-red-600 text-2xl mr-3';
+            } else {
+                previewIcon.className = 'fas fa-file-word text-blue-600 text-2xl mr-3';
+            }
+            
+            previewName.textContent = documentInfo.fileName;
+            previewSize.textContent = fileUpload.formatFileSize(documentInfo.fileSize);
+            totalPages.textContent = documentInfo.totalPages + ' pages';
+            
+            // Update price
+            fileUpload.updatePrice();
+        }
+
+        function populateSummary() {
+            // Get all form values
+            const pageSelection = document.getElementById('pageSelection').value;
+            const pageRange = document.getElementById('pageRange').value;
+            const colorType = document.querySelector('input[name="color"]:checked').value;
+            const sidesType = document.querySelector('input[name="sides"]:checked').value;
+            const copies = parseInt(document.getElementById('copies').value) || 1;
+            const deliveryMethod = document.querySelector('input[name="delivery"]:checked').value;
+            
+            // Calculate values
+            let pagesToPrint = documentInfo.totalPages;
+            if (pageSelection === 'range' && pageRange) {
+                pagesToPrint = fileUpload.calculateRangePages(pageRange);
+            }
+            
+            const pricePerPage = colorType === 'color' ? 0.7 : 0.4;
+            const printingCost = pagesToPrint * pricePerPage * copies;
+            
+            let deliveryCost = 0;
+            let deliveryText = '';
+            if (deliveryMethod === 'pickup') {
+                deliveryText = 'Retrait en bibliothèque';
+            } else if (deliveryMethod === 'shipping') {
+                deliveryCost = 5;
+                deliveryText = 'Livraison rapide';
+            } else if (deliveryMethod === 'express') {
+                deliveryCost = 8;
+                deliveryText = 'Livraison express';
+            }
+            
+            const totalCost = printingCost + deliveryCost;
+            
+            // Update summary
+            document.getElementById('summaryFileName').textContent = documentInfo.fileName;
+            document.getElementById('summaryPages').textContent = pagesToPrint + ' pages';
+            document.getElementById('summaryType').textContent = sidesType === 'duplex' ? 'Recto-Verso' : 'Recto seulement';
+            document.getElementById('summaryColor').textContent = colorType === 'color' ? 'Couleur' : 'Noir & Blanc';
+            document.getElementById('summaryCopies').textContent = copies;
+            document.getElementById('summaryDelivery').textContent = deliveryText;
+            document.getElementById('summarySubtotal').textContent = printingCost.toFixed(1) + ' TND';
+            document.getElementById('summaryShipping').textContent = deliveryCost > 0 ? deliveryCost.toFixed(1) + ' TND' : 'Gratuit';
+            document.getElementById('summaryTotal').textContent = totalCost.toFixed(1) + ' TND';
+        }
+
+        function submitOrder() {
+            // Validate contact information
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            const deliveryMethod = document.querySelector('input[name="delivery"]:checked').value;
+            const address = document.getElementById('customerAddress').value.trim();
+            
+            if (!name || !phone || !email) {
+                alert('Veuillez remplir tous les champs obligatoires.');
+                return;
+            }
+            
+            if ((deliveryMethod === 'shipping' || deliveryMethod === 'express') && !address) {
+                alert('Veuillez renseigner votre adresse de livraison.');
+                return;
+            }
+            
+            // Simulate order submission
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner spinner mr-2"></i> Traitement en cours...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('Commande soumise avec succès !\n\nVous recevrez un email de confirmation sous peu.\nRéférence: FPX-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+                closeDocumentFlow();
+                
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 2000);
+        }
+
+        function removeFile() {
+            uploadedFile = null;
+            documentInfo = { totalPages: 0, fileName: '', fileSize: 0, fileType: '' };
+            
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').classList.add('hidden');
+            document.getElementById('uploadArea').classList.remove('has-file', 'has-error');
+            fileUpload.hideError();
         }
 
         // Language selector
@@ -728,10 +1373,20 @@
         window.addEventListener('scroll', () => {
             const header = document.querySelector('header');
             if (window.scrollY > 100) {
-                header.classList.add('bg-white', 'shadow-lg');
+                header.classList.add('shadow-lg');
             } else {
-                header.classList.remove('bg-white', 'shadow-lg');
+                header.classList.remove('shadow-lg');
             }
+        });
+        
+        // Prevent modal from closing when clicking on modal content
+        document.querySelector('.bg-white.rounded-2xl').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateButtons();
         });
     </script>
 </body>
